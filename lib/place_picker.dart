@@ -8,7 +8,6 @@ import 'package:location/location.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:place_picker/entities_place_picker/entities.dart';
-import 'package:place_picker/entities_place_picker/localization_item.dart';
 import 'package:place_picker/widgets/widgets.dart';
 
 //ignore_for_file:cascade_invocations
@@ -26,32 +25,32 @@ class PlacePicker extends StatefulWidget {
 
   /// Location to be displayed when screen is showed. If this is set or not null, the
   /// map does not pan to the user's current location.
-  final LatLng displayLocation;
+  final LatLng? displayLocation;
 
   /// First text that will be autofilled in search field
   final String initString;
   final bool showChoosedPlaceCoordinates;
   final bool showArrow;
-  final Widget bottomWidget;
-  final Widget navigationIconWidget;
+  final Widget? bottomWidget;
+  final Widget? navigationIconWidget;
   final LocalizationItem localizationItem;
 
   /// It can only be single line height
-  final String searchTopText;
-  final TextStyle searchTopTextStyle;
+  final String? searchTopText;
+  final TextStyle? searchTopTextStyle;
 
   /// Bottom container with text tip
   final bool showTip;
 
   /// Color of bottom tip
-  final Color colorTip;
+  final Color? colorTip;
 
   /// If `true` map after selecting place after tap on search item will use additinal request
   /// to geocode location
   final bool isNeedToUseGeocoding;
 
   /// If not `null` user can't choose other state exept [userCanOnlyPickState]
-  final String userCanOnlyPickState;
+  final String? userCanOnlyPickState;
 
   /// Place picker widget made with map widget from
   /// [google_maps_flutter](https://github.com/flutter/plugins/tree/master/packages/google_maps_flutter)
@@ -60,14 +59,14 @@ class PlacePicker extends StatefulWidget {
   /// API key provided should have `Maps SDK for Android`, `Maps SDK for iOS`
   /// and `Places API`  enabled for it
   PlacePicker({
-    Key key,
+    Key? key,
     this.displayLocation,
     this.localizationItem = const LocalizationItem(),
     this.initString = '',
     this.showChoosedPlaceCoordinates = true,
     this.showArrow = true,
     this.bottomWidget,
-    @required this.apiKey,
+    required this.apiKey,
     this.searchTopText,
     this.searchTopTextStyle,
     this.showTip = true,
@@ -78,7 +77,7 @@ class PlacePicker extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => PlacePickerState();
+  State<StatefulWidget> createState() => PlacePickerState(localizationItem);
 }
 
 /// Place picker state
@@ -89,10 +88,10 @@ class PlacePickerState extends State<PlacePicker> {
   final Set<Marker> markers = {};
 
   /// Result returned after user completes selection
-  LocationResult locationResult;
+  LocationResult? locationResult;
 
   /// Overlay to display autocomplete suggestions
-  OverlayEntry overlayEntry;
+  OverlayEntry? overlayEntry;
 
   List<NearbyPlace> nearbyPlaces = [];
 
@@ -109,7 +108,7 @@ class PlacePickerState extends State<PlacePicker> {
   LocalizationItem _localizationItem;
 
   // constructor
-  PlacePickerState();
+  PlacePickerState(this._localizationItem);
 
   void onMapCreated(GoogleMapController controller) {
     mapController.complete(controller);
@@ -126,7 +125,7 @@ class PlacePickerState extends State<PlacePicker> {
   @override
   void initState() {
     super.initState();
-    _localizationItem = widget.localizationItem ?? const LocalizationItem();
+    _localizationItem = widget.localizationItem;
     markers.add(Marker(
       position: widget.displayLocation ?? const LatLng(5.6037, 0.1870),
       markerId: MarkerId('selected-location'),
@@ -180,7 +179,7 @@ class PlacePickerState extends State<PlacePicker> {
             locationName: getLocationName(),
             onTap: () {
               if (widget.userCanOnlyPickState != null) {
-                if (locationResult.administrativeAreaLevel1.shortName ==
+                if (locationResult?.administrativeAreaLevel1?.shortName ==
                     widget.userCanOnlyPickState) {
                   Navigator.of(context).pop(locationResult);
                 }
@@ -216,7 +215,7 @@ class PlacePickerState extends State<PlacePicker> {
   /// Hides the autocomplete overlay
   void clearOverlay() {
     if (overlayEntry != null) {
-      overlayEntry.remove();
+      overlayEntry?.remove();
       overlayEntry = null;
     }
   }
@@ -249,7 +248,7 @@ class PlacePickerState extends State<PlacePicker> {
       final size = renderBox.size;
 
       final appBarBox =
-          appBarKey.currentContext.findRenderObject() as RenderBox;
+          appBarKey.currentContext?.findRenderObject() as RenderBox;
 
       overlayEntry = OverlayEntry(
         builder: (context) => Positioned(
@@ -279,8 +278,7 @@ class PlacePickerState extends State<PlacePicker> {
           ),
         ),
       );
-
-      Overlay.of(context).insert(overlayEntry);
+      if (overlayEntry != null) Overlay.of(context)?.insert(overlayEntry!);
 
       autoCompleteSearch(place);
     } catch (e) {
@@ -300,8 +298,8 @@ class PlacePickerState extends State<PlacePicker> {
           'input={$place}&sessiontoken=$sessionToken';
 
       if (locationResult != null) {
-        endpoint += '&location=${locationResult.latLng.latitude},'
-            '${locationResult.latLng.longitude}';
+        endpoint += '&location=${locationResult?.latLng?.latitude},'
+            '${locationResult?.latLng?.longitude}';
       }
 
       final response = await http.get(Uri.parse(endpoint));
@@ -322,19 +320,21 @@ class PlacePickerState extends State<PlacePicker> {
       var suggestions = <RichSuggestion>[];
 
       if (predictions.isEmpty) {
-        var aci = AutoCompleteItem();
-        aci.text = _localizationItem.noResultsFound;
-        aci.offset = 0;
-        aci.length = 0;
+        var aci = AutoCompleteItem(
+          text: _localizationItem.noResultsFound,
+          offset: 0,
+          length: 0,
+        );
 
         suggestions.add(RichSuggestion(autoCompleteItem: aci, onTap: () {}));
       } else {
         for (dynamic t in predictions) {
-          final aci = AutoCompleteItem()
-            ..id = t['place_id'] as String
-            ..text = t['description'] as String
-            ..offset = t['matched_substrings'][0]['offset'] as int
-            ..length = t['matched_substrings'][0]['length'] as int;
+          final aci = AutoCompleteItem(
+            id: t['place_id'] as String,
+            text: t['description'] as String,
+            offset: t['matched_substrings'][0]['offset'] as int,
+            length: t['matched_substrings'][0]['length'] as int,
+          );
 
           suggestions.add(RichSuggestion(
               autoCompleteItem: aci,
@@ -388,13 +388,13 @@ class PlacePickerState extends State<PlacePicker> {
       );
       locationResult = const LocationResult();
       if (addressComponents != null) {
-        String name,
+        String? name,
             postalCode,
             locality,
             streetNumber,
             formattedAddress,
             placeId;
-        AddressComponent administrativeAreaLevel1,
+        AddressComponent? administrativeAreaLevel1,
             administrativeAreaLevel2,
             subLocalityLevel1,
             subLocalityLevel2,
@@ -434,7 +434,7 @@ class PlacePickerState extends State<PlacePicker> {
             subLocalityLevel2 = AddressComponent.fromJson(_item);
           }
         }
-        locationResult = locationResult.copyWith(
+        locationResult = locationResult?.copyWith(
           administrativeAreaLevel1: administrativeAreaLevel1,
           administrativeAreaLevel2: administrativeAreaLevel2,
           city: city,
@@ -460,7 +460,7 @@ class PlacePickerState extends State<PlacePicker> {
     final renderBox = context.findRenderObject() as RenderBox;
     var size = renderBox.size;
 
-    final appBarBox = appBarKey.currentContext.findRenderObject() as RenderBox;
+    final appBarBox = appBarKey.currentContext?.findRenderObject() as RenderBox;
 
     clearOverlay();
 
@@ -471,8 +471,7 @@ class PlacePickerState extends State<PlacePicker> {
         child: Material(elevation: 1, child: Column(children: suggestions)),
       ),
     );
-
-    Overlay.of(context).insert(overlayEntry);
+    if (overlayEntry != null) Overlay.of(context)?.insert(overlayEntry!);
   }
 
   /// Utility function to get clean readable name of a location. First checks
@@ -486,20 +485,20 @@ class PlacePickerState extends State<PlacePicker> {
     }
 
     for (var np in nearbyPlaces) {
-      if (np.latLng == locationResult.latLng &&
-          np.name != locationResult.locality) {
-        locationResult.copyWith(name: np.name);
-        return '${np.name}, ${locationResult.locality}';
+      if (np.latLng == locationResult?.latLng &&
+          np.name != locationResult?.locality) {
+        locationResult?.copyWith(name: np.name);
+        return '${np.name}, ${locationResult?.locality}';
       }
     }
-    if (locationResult.name == null || locationResult.locality == null) {
-      if (locationResult.formattedAddress == null) {
+    if (locationResult?.name == null || locationResult?.locality == null) {
+      if (locationResult?.formattedAddress == null) {
         return _localizationItem.unnamedLocation;
       } else {
-        return locationResult.formattedAddress;
+        return locationResult!.formattedAddress!;
       }
     }
-    return '${locationResult.name}, ${locationResult.locality}';
+    return '${locationResult?.name}, ${locationResult?.locality}';
   }
 
   /// Moves the marker to the indicated lat,lng
@@ -537,13 +536,14 @@ class PlacePickerState extends State<PlacePicker> {
       if (responseJson is List<Map<String, dynamic>>) {
         for (var item
             in responseJson['results'] as List<Map<String, dynamic>>) {
-          final nearbyPlace = NearbyPlace()
-            ..name = item['name'] as String
-            ..icon = item['icon'] as String
-            ..latLng = LatLng(
+          final nearbyPlace = NearbyPlace(
+            name: item['name'] as String,
+            icon: item['icon'] as String,
+            latLng: LatLng(
               item['geometry']['location']['lat'] as double,
               item['geometry']['location']['lng'] as double,
-            );
+            ),
+          );
 
           nearbyPlaces.add(nearbyPlace);
         }
@@ -585,7 +585,7 @@ class PlacePickerState extends State<PlacePicker> {
       final result = responseJson['results'][0] as Map<String, dynamic>;
 
       setState(() {
-        String name,
+        String? name,
             locality,
             postalCode,
             country,
@@ -602,7 +602,7 @@ class PlacePickerState extends State<PlacePicker> {
                   .toList();
           for (var i = 0; i < addressComponents.length; i++) {
             var tmp = addressComponents[i];
-            var types = tmp['types'] as List<dynamic>;
+            var types = tmp['types'] as List<dynamic>?;
             var shortName = tmp['short_name'] as String;
             if (types == null) {
               continue;
@@ -668,7 +668,7 @@ class PlacePickerState extends State<PlacePicker> {
 
   /// Moves the camera to the provided location and updates other UI features to
   /// match the location.
-  void moveToLocation(LatLng latLng, {@required bool isNeedToGeocode}) {
+  void moveToLocation(LatLng latLng, {required bool isNeedToGeocode}) {
     mapController.future.then((controller) {
       controller.animateCamera(
         CameraUpdate.newCameraPosition(
@@ -686,14 +686,16 @@ class PlacePickerState extends State<PlacePicker> {
 
   void moveToCurrentUserLocation() {
     if (widget.displayLocation != null) {
-      moveToLocation(widget.displayLocation, isNeedToGeocode: true);
+      moveToLocation(widget.displayLocation!, isNeedToGeocode: true);
       return;
     }
 
     Location().getLocation().then((locationData) {
-      var target = LatLng(locationData.latitude, locationData.longitude);
+      var target = LatLng(locationData.latitude!, locationData.longitude!);
       moveToLocation(target, isNeedToGeocode: true);
-    }).catchError((dynamic error) => printError(error.toString()));
+    }).catchError((dynamic error) {
+      printError(error.toString());
+    });
   }
 
   void printError(String error) {

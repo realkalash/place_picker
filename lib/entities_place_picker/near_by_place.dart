@@ -12,4 +12,10 @@ class NearbyPlace {
 
   // Latitude/Longitude of the provided location.
   LatLng latLng;
+  
+  NearbyPlace({
+    required this.name,
+    required this.icon,
+    required this.latLng,
+  });
 }

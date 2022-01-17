@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:place_picker/entities_place_picker/entities.dart';
 
 class RichSuggestion extends StatelessWidget {
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final AutoCompleteItem autoCompleteItem;
 
   RichSuggestion({
-    Key key,
+    Key? key,
     this.onTap,
-    this.autoCompleteItem,
+    required this.autoCompleteItem,
   }) : super(key: key);
 
   @override
@@ -29,18 +29,23 @@ class RichSuggestion extends StatelessWidget {
     final result = <TextSpan>[];
     final style = const TextStyle(color: Colors.grey, fontSize: 15);
 
-    final startText = autoCompleteItem.text.substring(0, autoCompleteItem.offset);
-    if (startText.isNotEmpty) {
+    final startText =
+        autoCompleteItem.text.substring(0, autoCompleteItem.offset);
+    if ((startText).isNotEmpty) {
       result.add(TextSpan(text: startText, style: style));
     }
 
-    final boldText =
-        autoCompleteItem.text.substring(autoCompleteItem.offset, autoCompleteItem.offset + autoCompleteItem.length);
+    final boldText = autoCompleteItem.text.substring(autoCompleteItem.offset,
+        autoCompleteItem.offset + autoCompleteItem.length);
     result.add(
-      TextSpan(text: boldText, style: style.copyWith(color: Theme.of(context).textTheme.bodyText1?.color)),
+      TextSpan(
+          text: boldText,
+          style: style.copyWith(
+              color: Theme.of(context).textTheme.bodyText1?.color)),
     );
 
-    final remainingText = autoCompleteItem.text.substring(autoCompleteItem.offset + autoCompleteItem.length);
+    final remainingText = autoCompleteItem.text
+        .substring(autoCompleteItem.offset + autoCompleteItem.length);
     result.add(TextSpan(text: remainingText, style: style));
 
     return result;

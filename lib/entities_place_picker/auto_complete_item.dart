@@ -13,4 +13,11 @@ class AutoCompleteItem {
 
   /// Length of matched part of the [text]
   int length;
+
+  AutoCompleteItem({
+    this.id = 'null',
+    required this.text,
+    required this.offset,
+    required this.length,
+  });
 }

@@ -7,34 +7,34 @@ class LocationResult {
   /// The human readable name of the location. This is primarily the
   /// name of the road. But in cases where the place was selected from Nearby
   /// places list, we use the <b>name</b> provided on the list item.
-  final String name; // or road
+  final String? name; // or road
 
   /// The human readable locality of the location.
-  final String locality;
+  final String? locality;
 
   /// Latitude/Longitude of the selected location.
-  final LatLng latLng;
+  final LatLng? latLng;
 
   /// Formatted address suggested by Google
-  final String formattedAddress;
+  final String? formattedAddress;
 
-  final AddressComponent country;
+  final AddressComponent? country;
 
-  final AddressComponent city;
+  final AddressComponent? city;
 
-  final AddressComponent administrativeAreaLevel1;
+  final AddressComponent? administrativeAreaLevel1;
 
-  final AddressComponent administrativeAreaLevel2;
+  final AddressComponent? administrativeAreaLevel2;
 
-  final AddressComponent subLocalityLevel1;
+  final AddressComponent? subLocalityLevel1;
 
-  final AddressComponent subLocalityLevel2;
+  final AddressComponent? subLocalityLevel2;
 
-  final String postalCode;
+  final String? postalCode;
 
-  final String placeId;
+  final String? placeId;
 
-  final String streetNumber;
+  final String? streetNumber;
 
   const LocationResult({
     this.name,
@@ -53,19 +53,19 @@ class LocationResult {
   });
 
   LocationResult copyWith({
-    String name,
-    String locality,
-    LatLng latLng,
-    String formattedAddress,
-    AddressComponent country,
-    AddressComponent city,
-    AddressComponent administrativeAreaLevel1,
-    AddressComponent administrativeAreaLevel2,
-    AddressComponent subLocalityLevel1,
-    AddressComponent subLocalityLevel2,
-    String postalCode,
-    String placeId,
-    String streetNumber,
+    String? name,
+    String? locality,
+    LatLng? latLng,
+    String? formattedAddress,
+    AddressComponent? country,
+    AddressComponent? city,
+    AddressComponent? administrativeAreaLevel1,
+    AddressComponent? administrativeAreaLevel2,
+    AddressComponent? subLocalityLevel1,
+    AddressComponent? subLocalityLevel2,
+    String? postalCode,
+    String? placeId,
+    String? streetNumber,
   }) {
     return LocationResult(
       name: name ?? this.name,
@@ -86,7 +86,7 @@ class LocationResult {
   /// Return copy of instance without coma in parameters
   LocationResult copyWithClearComa(){
     if(this.name != null){
-      return copyWith(name: this.name.replaceAll(',', ''));
+      return copyWith(name: this.name?.replaceAll(',', ''));
     }
     return this;
   }

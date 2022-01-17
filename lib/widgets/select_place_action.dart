@@ -10,21 +10,21 @@ class SelectPlaceAction extends StatelessWidget {
   final bool showChoosedPlaceCoordinates;
   final bool showArrow;
   final VoidCallback onTap;
-  final Widget bottomWidget;
-  final Widget iconWidget;
-  final Color colorTip;
+  final Widget? bottomWidget;
+  final Widget? iconWidget;
+  final Color? colorTip;
   
   const SelectPlaceAction({
-    Key key,
-    @required this.locationName,
-    @required this.choosedPlaceText,
-    @required this.approximatePointInGmapsText,
-    @required this.tipText,
-    @required this.showTip,
-    @required this.onTap,
-    @required this.latLngString,
-    @required this.showChoosedPlaceCoordinates,
-    @required this.showArrow,
+    Key? key,
+    required this.locationName,
+    required this.choosedPlaceText,
+    required this.approximatePointInGmapsText,
+    required this.tipText,
+    required this.showTip,
+    required this.onTap,
+    required this.latLngString,
+    required this.showChoosedPlaceCoordinates,
+    required this.showArrow,
     this.bottomWidget,
     this.iconWidget,
     this.colorTip,
@@ -64,7 +64,7 @@ class SelectPlaceAction extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if(iconWidget != null) iconWidget,
+                  if(iconWidget != null) iconWidget!,
                   if (showArrow)
                     Container(
                       child: const Padding(
@@ -92,7 +92,7 @@ class SelectPlaceAction extends StatelessWidget {
                       style: const TextStyle(color: Colors.white)),
                 ),
               const SizedBox(height: 24),
-              if (bottomWidget != null) bottomWidget
+              if (bottomWidget != null) bottomWidget!
             ],
           ),
         ),

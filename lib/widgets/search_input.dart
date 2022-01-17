@@ -6,15 +6,15 @@ import 'package:flutter/material.dart';
 /// Custom Search input field, showing the search and clear icons.
 class SearchInput extends StatefulWidget {
   final ValueChanged<String> onSearchInput;
-  final String initString;
+  final String? initString;
   final String hint;
-  final TextStyle searchTextStyle;
-  final String topText;
-  final TextStyle topTextStyle;
+  final TextStyle? searchTextStyle;
+  final String? topText;
+  final TextStyle? topTextStyle;
   SearchInput({
-    Key key,
-    @required this.onSearchInput,
-    @required this.hint,
+    Key? key,
+    required this.onSearchInput,
+    required this.hint,
     this.initString = '',
     this.searchTextStyle,
     this.topText,
@@ -28,7 +28,7 @@ class SearchInput extends StatefulWidget {
 class SearchInputState extends State<SearchInput> {
   TextEditingController editController = TextEditingController();
 
-  Timer debouncer;
+  Timer? debouncer;
 
   bool hasSearchEntry = false;
 
@@ -37,7 +37,7 @@ class SearchInputState extends State<SearchInput> {
   @override
   void initState() {
     super.initState();
-    editController.text = widget.initString;
+    editController.text = widget.initString ?? '';
     editController.addListener(onSearchInputChange);
   }
 
@@ -57,7 +57,7 @@ class SearchInputState extends State<SearchInput> {
     }
 
     if (debouncer?.isActive ?? false) {
-      debouncer.cancel();
+      debouncer?.cancel();
     }
 
     debouncer = Timer(const Duration(milliseconds: 1000), () {
@@ -74,7 +74,7 @@ class SearchInputState extends State<SearchInput> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child:
-                Center(child: Text(widget.topText, style: widget.topTextStyle)),
+                Center(child: Text(widget.topText!, style: widget.topTextStyle)),
           ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8),
