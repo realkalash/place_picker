@@ -1,6 +1,6 @@
 name: place_picker
 description: Plugin place picker.
-version: 0.0.5
+version: 0.0.6
 author:
 homepage:
 
@@ -14,7 +14,7 @@ dependencies:
   google_maps_flutter: ^1.2.0
   http: ^0.12.2
   uuid: ^3.0.4
-  location: ^3.2.4
+  location: ^4.1.1
 
 dev_dependencies:
   flutter_test:
