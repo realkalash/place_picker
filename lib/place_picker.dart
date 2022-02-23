@@ -9,8 +9,13 @@ import 'package:uuid/uuid.dart';
 
 import 'package:place_picker/entities_place_picker/entities.dart';
 import 'package:place_picker/widgets/widgets.dart';
+import 'package:yandex_geocoder/yandex_geocoder.dart';
 
 //ignore_for_file:cascade_invocations
+enum MapProvider {
+  google,
+  yandex,
+}
 
 /// Place picker widget made with map widget from
 /// [google_maps_flutter](https://github.com/flutter/plugins/tree/master/packages/google_maps_flutter)
@@ -52,6 +57,9 @@ class PlacePicker extends StatefulWidget {
   /// If not `null` user can't choose other state exept [userCanOnlyPickState]
   final String? userCanOnlyPickState;
 
+  /// See inner doc
+  final MapProvider mapProvider;
+
   /// Place picker widget made with map widget from
   /// [google_maps_flutter](https://github.com/flutter/plugins/tree/master/packages/google_maps_flutter)
   /// and other API calls to [Google Places API](https://developers.google.com/places/web-service/intro)
@@ -74,6 +82,7 @@ class PlacePicker extends StatefulWidget {
     this.isNeedToUseGeocoding = true,
     this.userCanOnlyPickState,
     this.colorTip,
+    this.mapProvider = MapProvider.google,
   }) : super(key: key);
 
   @override
@@ -200,7 +209,7 @@ class PlacePickerState extends State<PlacePicker> {
                 ? _localizationItem.youCantChooseThisState
                 : _localizationItem.tipBottomText,
             latLngString:
-                '${locationResult?.latLng?.latitude?.toStringAsFixed(7)}, ${locationResult?.latLng?.longitude?.toStringAsFixed(7)}',
+                '${locationResult?.latLng?.latitude.toStringAsFixed(7)}, ${locationResult?.latLng?.longitude.toStringAsFixed(7)}',
             showChoosedPlaceCoordinates: widget.showChoosedPlaceCoordinates,
             showArrow: widget.showArrow,
             bottomWidget: widget.bottomWidget,
@@ -559,9 +568,18 @@ class PlacePickerState extends State<PlacePicker> {
     }
   }
 
+  void reverseGeocodeLatLng(LatLng latLng) {
+    if (widget.mapProvider == MapProvider.google) {
+      reverseGeocodeLatLngGoogle(latLng);
+    }
+    if (widget.mapProvider == MapProvider.yandex) {
+      reverseGeocodeLatLngYandex(latLng);
+    }
+  }
+
   /// This method gets the human readable name of the location. Mostly appears
   /// to be the road name and the locality.
-  void reverseGeocodeLatLng(LatLng latLng) async {
+  void reverseGeocodeLatLngGoogle(LatLng latLng) async {
     try {
       final url = Uri.parse('https://maps.googleapis.com/maps/api/geocode/json?'
           'latlng=${latLng.latitude},${latLng.longitude}&'
@@ -663,6 +681,54 @@ class PlacePickerState extends State<PlacePicker> {
       });
     } catch (e) {
       printError('Exception throwed by map package: $e');
+    }
+  }
+
+  /// This method gets the human readable name of the location. Mostly appears
+  /// to be the road name and the locality.
+  void reverseGeocodeLatLngYandex(LatLng latLng) async {
+    try {
+      final YandexGeocoder geocoder = YandexGeocoder(apiKey: widget.apiKey);
+
+      final GeocodeResponse geocodeFromPoint = await geocoder.getGeocode(
+        GeocodeRequest(
+          geocode: PointGeocode(latitude: 55.771899, longitude: 37.597576),
+          lang: Lang.enEn,
+        ),
+      );
+
+      print('Map recieved: ${geocodeFromPoint.firstFullAddress}');
+      final firstAddress = geocodeFromPoint.firstFullAddress;
+      setState(() {
+        locationResult = LocationResult(
+          name: firstAddress.formattedAddress,
+          locality: firstAddress.countryCode,
+          latLng: latLng,
+          formattedAddress: firstAddress.formattedAddress,
+          placeId: '',
+          postalCode: firstAddress.postalCode,
+          country: AddressComponent(
+              name: firstAddress.countryCode,
+              shortName: firstAddress.countryCode),
+          administrativeAreaLevel1: AddressComponent(
+              name: firstAddress.countryCode,
+              shortName: firstAddress.countryCode),
+          administrativeAreaLevel2: AddressComponent(
+              name: firstAddress.countryCode,
+              shortName: firstAddress.countryCode),
+          city: AddressComponent(
+              name: firstAddress.countryCode,
+              shortName: firstAddress.countryCode),
+          subLocalityLevel1: AddressComponent(
+              name: firstAddress.countryCode,
+              shortName: firstAddress.countryCode),
+          subLocalityLevel2: AddressComponent(
+              name: firstAddress.countryCode,
+              shortName: firstAddress.countryCode),
+        );
+      });
+    } catch (e) {
+      printError('Exception throwed by map package with YANDEX: $e');
     }
   }
 
