@@ -13,6 +13,10 @@ class LocalizationItem {
 
   final String youCantChooseThisState;
 
+  final String submit;
+
+  final FormLocalizationItem formLocalizationItem;
+
   const LocalizationItem({
     this.languageCode = 'en_us',
     this.nearBy = 'Nearby Places',
@@ -25,5 +29,27 @@ class LocalizationItem {
     this.choosedPlaceText = 'Choosed place',
     this.search = 'Search...',
     this.youCantChooseThisState = 'You can\'t choose other states except ',
+    this.submit = 'Submit',
+    this.formLocalizationItem = const FormLocalizationItem(),
+  });
+}
+
+class FormLocalizationItem {
+  final String formattedAddress;
+  final String city;
+  final String streetNumber;
+  final String country;
+
+  /// For example state or region
+  final String administrativeAreaLevel1;
+  final String street;
+
+  const FormLocalizationItem({
+    this.formattedAddress = 'formattedAddress',
+    this.country = 'Country',
+    this.administrativeAreaLevel1 = 'Region',
+    this.city = 'City',
+    this.street = 'Street',
+    this.streetNumber = 'Street number',
   });
 }

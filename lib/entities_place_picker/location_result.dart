@@ -103,4 +103,13 @@ class LocationResult {
         'subLocalityLevel2: $subLocalityLevel2; postalCode: $postalCode; placeId: $placeId'
         'streetNumber: $streetNumber';
   }
+
+  /// Full representation of Location result.
+  String toStringWithNewLine() {
+    return 'name: $name;\nlocality: $locality;\nlatLng: $latLng;\nformattedAddress: $formattedAddress;\n'
+        'country: $country;\ncity $city;\nadministrativeAreaLevel1: $administrativeAreaLevel1;\n'
+        'administrativeAreaLevel2: $administrativeAreaLevel2;\nsubLocalityLevel1: $subLocalityLevel1;\n'
+        'subLocalityLevel2: $subLocalityLevel2;\npostalCode: $postalCode;\nplaceId: $placeId;\n'
+        'streetNumber: $streetNumber';
+  }
 }

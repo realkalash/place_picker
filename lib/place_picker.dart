@@ -6,6 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart' as google;
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart' as latlong;
 import 'package:location/location.dart';
+import 'package:place_picker/widgets/form_field_page.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:place_picker/entities_place_picker/entities.dart';
@@ -16,6 +17,7 @@ import 'extensions.dart';
 enum MapProvider {
   google,
   osm,
+  formField,
 }
 
 enum GeocoderProvider {
@@ -103,6 +105,27 @@ class PlacePicker extends StatefulWidget {
   /// Used for OSM maps. E.x com.example.app
   final String userAgentPackageName;
 
+  /// Use this only with [mapProvider] [MapProvider.formField]
+  final Future<List<String>> Function(String)? formattedAddressSuggestions;
+
+  /// Use this only with [mapProvider] [MapProvider.formField]
+  final Future<List<String>> Function(String)? citySuggestions;
+
+  /// Use this only with [mapProvider] [MapProvider.formField]
+  final Future<List<String>> Function(String)? streetNumberSuggestions;
+
+  /// Use this only with [mapProvider] [MapProvider.formField]
+  final Future<List<String>> Function(String)? streetSuggestions;
+
+  /// Use this only with [mapProvider] [MapProvider.formField]
+  final Future<List<String>> Function(String)? countrySuggestions;
+
+  /// Use this only with [mapProvider] [MapProvider.formField]
+  final Future<List<String>> Function(String)? administrativeArea1Suggestions;
+
+  /// Use this only with [mapProvider] [MapProvider.formField]
+  final FormFieldParams formFieldParams;
+
   /// Place picker widget made with map widget from
   /// [google_maps_flutter](https://github.com/flutter/plugins/tree/master/packages/google_maps_flutter)
   /// and other API calls to [Google Places API](https://developers.google.com/places/web-service/intro)
@@ -132,6 +155,13 @@ class PlacePicker extends StatefulWidget {
     this.mapProvider = MapProvider.google,
     this.geocoderProvider = GeocoderProvider.google,
     this.userAgentPackageName = 'com.example.app',
+    this.formattedAddressSuggestions,
+    this.citySuggestions,
+    this.streetNumberSuggestions,
+    this.countrySuggestions,
+    this.administrativeArea1Suggestions,
+    this.streetSuggestions,
+    this.formFieldParams = const FormFieldParams(),
   }) : super(key: key);
 
   @override
@@ -198,6 +228,26 @@ class PlacePickerState extends State<PlacePicker> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.mapProvider == MapProvider.formField) {
+      return FormWidget(
+        initString: widget.initString,
+        showArrow: widget.showArrow,
+        localizationItem: widget.localizationItem,
+        showTip: widget.showTip,
+        tipText: widget.localizationItem.tipBottomText,
+        formFieldParams: widget.formFieldParams,
+        administrativeArea1Suggestions: widget.administrativeArea1Suggestions,
+        bottomWidget: widget.bottomWidget,
+        citySuggestions: widget.citySuggestions,
+        colorTip: widget.colorTip,
+        countrySuggestions: widget.countrySuggestions,
+        formattedAddressSuggestions: widget.formattedAddressSuggestions,
+        searchTopText: widget.searchTopText,
+        searchTopTextStyle: widget.searchTopTextStyle,
+        streetNumberSuggestions: widget.streetNumberSuggestions,
+        streetSuggestions: widget.streetSuggestions,
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         key: appBarKey,

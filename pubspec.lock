@@ -50,6 +50,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.0.2"
+  easy_autocomplete:
+    dependency: "direct main"
+    description:
+      name: easy_autocomplete
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.6.0"
   fake_async:
     dependency: transitive
     description:

@@ -10,4 +10,9 @@ class AddressComponent {
       shortName: json['short_name'] as String,
     );
   }
+
+  @override
+  String toString() {
+    return '$name ($shortName)';
+  }
 }
