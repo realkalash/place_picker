@@ -1,18 +1,24 @@
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/plugin_api.dart' as osm;
+import 'package:google_maps_flutter/google_maps_flutter.dart' as google;
 import 'package:http/http.dart' as http;
+import 'package:latlong2/latlong.dart' as latlong;
 import 'package:location/location.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:place_picker/entities_place_picker/entities.dart';
 import 'package:place_picker/widgets/widgets.dart';
 import 'package:yandex_geocoder/yandex_geocoder.dart';
+import 'extensions.dart';
 
-//ignore_for_file:cascade_invocations
 enum MapProvider {
+  google,
+  osm,
+}
+
+enum GeocoderProvider {
   google,
   yandex,
 }
@@ -21,8 +27,32 @@ enum MapProvider {
 /// [google_maps_flutter](https://github.com/flutter/plugins/tree/master/packages/google_maps_flutter)
 /// and other API calls to [Google Places API](https://developers.google.com/places/web-service/intro)
 ///
+/// * If you use [MapProvider.google]
+///
 /// API key provided should have `Maps SDK for Android`, `Maps SDK for iOS`
-/// and `Places API`  enabled for it
+/// and `Places API`  enabled for it.
+///
+/// * If you use [MapProvider.osm]
+///
+/// You should specify [userAgentPackageName].
+///
+/// Example usage:
+/// on your page
+/// ``` dart
+///  TextButton(
+///    onPressed: () {
+///      Navigator.of(context).push<LocationResult?>(
+///        MaterialPageRoute(
+///          builder: (c) => PlacePicker(
+///            apiKey: 'apiKey',
+///            mapProvider: MapProvider.osm, // MapProvider.google
+///            userAgentPackageName: 'com.example.app',
+///        ),
+///      );
+///    },
+///    child: Text('Choose location'),
+///  )
+/// ```
 class PlacePicker extends StatefulWidget {
   /// API key generated from Google Cloud Console. You can get an API key
   /// [here](https://cloud.google.com/maps-platform/)
@@ -30,7 +60,10 @@ class PlacePicker extends StatefulWidget {
 
   /// Location to be displayed when screen is showed. If this is set or not null, the
   /// map does not pan to the user's current location.
-  final LatLng? displayLocation;
+  final PlaceLatLng? initialLocation;
+
+  /// Can be different for different providers
+  final double initialZoom;
 
   /// First text that will be autofilled in search field
   final String initString;
@@ -54,24 +87,38 @@ class PlacePicker extends StatefulWidget {
   /// to geocode location
   final bool isNeedToUseGeocoding;
 
+  /// If `true` the map will try to show location name. If no name provided or error throwed
+  /// shows `unnamedLocation` text from [LocalizationItem]
+  final bool isNeedToShowLocationName;
+
   /// If not `null` user can't choose other state exept [userCanOnlyPickState]
   final String? userCanOnlyPickState;
 
   /// See inner doc
   final MapProvider mapProvider;
 
+  /// Used to geocode location name
+  final GeocoderProvider geocoderProvider;
+
+  /// Used for OSM maps. E.x com.example.app
+  final String userAgentPackageName;
+
   /// Place picker widget made with map widget from
   /// [google_maps_flutter](https://github.com/flutter/plugins/tree/master/packages/google_maps_flutter)
   /// and other API calls to [Google Places API](https://developers.google.com/places/web-service/intro)
   ///
   /// API key provided should have `Maps SDK for Android`, `Maps SDK for iOS`
-  /// and `Places API`  enabled for it
+  /// and `Places API`  enabled for it.
+  ///
+  /// returns [LocationResult] on pop route.
   PlacePicker({
     Key? key,
-    this.displayLocation,
+    this.initialLocation,
+    this.initialZoom = 17.0,
     this.localizationItem = const LocalizationItem(),
     this.initString = '',
     this.showChoosedPlaceCoordinates = true,
+    this.isNeedToShowLocationName = true,
     this.showArrow = true,
     this.bottomWidget,
     required this.apiKey,
@@ -83,6 +130,8 @@ class PlacePicker extends StatefulWidget {
     this.userCanOnlyPickState,
     this.colorTip,
     this.mapProvider = MapProvider.google,
+    this.geocoderProvider = GeocoderProvider.google,
+    this.userAgentPackageName = 'com.example.app',
   }) : super(key: key);
 
   @override
@@ -91,10 +140,11 @@ class PlacePicker extends StatefulWidget {
 
 /// Place picker state
 class PlacePickerState extends State<PlacePicker> {
-  final Completer<GoogleMapController> mapController = Completer();
+  google.GoogleMapController? googleMapController;
+  osm.MapController? osmMapController;
 
   /// Indicator for the selected location
-  final Set<Marker> markers = {};
+  final Set<PlaceMarker> markers = {};
 
   /// Result returned after user completes selection
   LocationResult? locationResult;
@@ -119,8 +169,8 @@ class PlacePickerState extends State<PlacePicker> {
   // constructor
   PlacePickerState(this._localizationItem);
 
-  void onMapCreated(GoogleMapController controller) {
-    mapController.complete(controller);
+  void onMapCreated(google.GoogleMapController controller) {
+    googleMapController = controller;
     moveToCurrentUserLocation();
   }
 
@@ -134,11 +184,10 @@ class PlacePickerState extends State<PlacePicker> {
   @override
   void initState() {
     super.initState();
+    if (widget.mapProvider == MapProvider.osm) {
+      osmMapController = osm.MapController();
+    }
     _localizationItem = widget.localizationItem;
-    markers.add(Marker(
-      position: widget.displayLocation ?? const LatLng(5.6037, 0.1870),
-      markerId: MarkerId('selected-location'),
-    ));
   }
 
   @override
@@ -167,21 +216,7 @@ class PlacePickerState extends State<PlacePicker> {
         children: <Widget>[
           Expanded(
             flex: 4,
-            child: GoogleMap(
-              initialCameraPosition: CameraPosition(
-                target: widget.displayLocation ?? const LatLng(5.6037, 0.1870),
-                zoom: 17,
-              ),
-              myLocationButtonEnabled: true,
-              myLocationEnabled: true,
-              onMapCreated: onMapCreated,
-              buildingsEnabled: true,
-              onTap: (latLng) {
-                clearOverlay();
-                moveToLocation(latLng, isNeedToGeocode: true);
-              },
-              markers: markers,
-            ),
+            child: buildMap(),
           ),
           // if (this.hasSearchTerm)
           SelectPlaceAction(
@@ -190,10 +225,10 @@ class PlacePickerState extends State<PlacePicker> {
               if (widget.userCanOnlyPickState != null) {
                 if (locationResult?.administrativeAreaLevel1?.shortName ==
                     widget.userCanOnlyPickState) {
-                  Navigator.of(context).pop(locationResult);
+                  Navigator.of(context).pop<LocationResult>(locationResult);
                 }
               } else {
-                Navigator.of(context).pop(locationResult);
+                Navigator.of(context).pop<LocationResult>(locationResult);
               }
             },
             approximatePointInGmapsText:
@@ -215,9 +250,64 @@ class PlacePickerState extends State<PlacePicker> {
             bottomWidget: widget.bottomWidget,
             iconWidget: widget.navigationIconWidget,
             colorTip: widget.colorTip,
+            showChoosedPlaceName: widget.isNeedToShowLocationName,
           ),
         ],
       ),
+    );
+  }
+
+  Widget buildMap() {
+    if (widget.mapProvider == MapProvider.osm) {
+      return osm.FlutterMap(
+        mapController: osmMapController,
+        // children: markers.map((e) => e.toWidget()).toList(),
+        layers: [
+          osm.TileLayerOptions(
+            urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+            userAgentPackageName: widget.userAgentPackageName,
+          ),
+          osm.MarkerLayerOptions(
+            markers: markers.map((e) => e.toOsmMarker()).toList(),
+          ),
+        ],
+        options: osm.MapOptions(
+          onTap: (tapPosition, latLng) {
+            clearOverlay();
+            setMarker(latLng);
+            moveToLocation(
+              latLng.toPlaceLatLng(),
+              isNeedToGeocode: true,
+            );
+          },
+          controller: osmMapController,
+          center: widget.initialLocation != null
+              ? widget.initialLocation!.toOsmLatLng()
+              : latlong.LatLng(51.509364, -0.128928),
+          zoom: widget.initialZoom,
+        ),
+      );
+    }
+    return google.GoogleMap(
+      initialCameraPosition: google.CameraPosition(
+        target: widget.initialLocation != null
+            ? (widget.initialLocation!.toGoogleLatLong())
+            : const google.LatLng(5.6037, 0.1870),
+        zoom: widget.initialZoom,
+      ),
+      myLocationButtonEnabled: true,
+      myLocationEnabled: true,
+      onMapCreated: onMapCreated,
+      buildingsEnabled: true,
+      onTap: (latLng) {
+        clearOverlay();
+        setMarker(latLng.toOsmLatLong());
+        moveToLocation(
+          latLng.toPlaceLatLng(),
+          isNeedToGeocode: true,
+        );
+      },
+      markers: markers.map((e) => e.toGoogleMarker()).toSet(),
     );
   }
 
@@ -389,10 +479,10 @@ class PlacePickerState extends State<PlacePicker> {
       final dynamic result = responseJson['result'];
       final dynamic location = result['geometry']['location'];
       final latLng =
-          LatLng(location['lat'] as double, location['lng'] as double);
+          google.LatLng(location['lat'] as double, location['lng'] as double);
       final dynamic addressComponents = result['address_components'];
       moveToLocation(
-        latLng,
+        latLng.toPlaceLatLng(),
         isNeedToGeocode: false,
       );
       locationResult = const LocationResult();
@@ -511,17 +601,18 @@ class PlacePickerState extends State<PlacePicker> {
   }
 
   /// Moves the marker to the indicated lat,lng
-  void setMarker(LatLng latLng) {
+  void setMarker(latlong.LatLng latLng) {
     // markers.clear();
     setState(() {
       markers.clear();
       markers.add(
-          Marker(markerId: MarkerId('selected-location'), position: latLng));
+        PlaceMarker(markerId: 'selected-location', position: latLng),
+      );
     });
   }
 
   /// Fetches and updates the nearby places to the provided lat,lng
-  void getNearbyPlaces(LatLng latLng) async {
+  void getNearbyPlaces(google.LatLng latLng) async {
     try {
       final url = Uri.parse(
           'https://maps.googleapis.com/maps/api/place/nearbysearch/json?'
@@ -538,7 +629,11 @@ class PlacePickerState extends State<PlacePicker> {
       print('Map recieved: $responseJson');
 
       if (responseJson['results'] == null) {
-        throw Error();
+        throw Error(
+          error: responseJson.toString(),
+          message: response.reasonPhrase,
+          statusCode: response.statusCode,
+        );
       }
 
       nearbyPlaces.clear();
@@ -548,7 +643,7 @@ class PlacePickerState extends State<PlacePicker> {
           final nearbyPlace = NearbyPlace(
             name: item['name'] as String,
             icon: item['icon'] as String,
-            latLng: LatLng(
+            latLng: google.LatLng(
               item['geometry']['location']['lat'] as double,
               item['geometry']['location']['lng'] as double,
             ),
@@ -568,18 +663,27 @@ class PlacePickerState extends State<PlacePicker> {
     }
   }
 
-  void reverseGeocodeLatLng(LatLng latLng) {
+  void reverseGeocodeLatLng(google.LatLng latLng) {
+    if (widget.isNeedToUseGeocoding == false &&
+        widget.showChoosedPlaceCoordinates) {
+      setState(() {
+        locationResult = LocationResult(
+          latLng: latLng,
+        );
+      });
+      return;
+    }
     if (widget.mapProvider == MapProvider.google) {
       reverseGeocodeLatLngGoogle(latLng);
     }
-    if (widget.mapProvider == MapProvider.yandex) {
+    if (widget.geocoderProvider == GeocoderProvider.yandex) {
       reverseGeocodeLatLngYandex(latLng);
     }
   }
 
   /// This method gets the human readable name of the location. Mostly appears
   /// to be the road name and the locality.
-  void reverseGeocodeLatLngGoogle(LatLng latLng) async {
+  void reverseGeocodeLatLngGoogle(google.LatLng latLng) async {
     try {
       final url = Uri.parse('https://maps.googleapis.com/maps/api/geocode/json?'
           'latlng=${latLng.latitude},${latLng.longitude}&'
@@ -686,7 +790,7 @@ class PlacePickerState extends State<PlacePicker> {
 
   /// This method gets the human readable name of the location. Mostly appears
   /// to be the road name and the locality.
-  void reverseGeocodeLatLngYandex(LatLng latLng) async {
+  void reverseGeocodeLatLngYandex(google.LatLng latLng) async {
     try {
       final YandexGeocoder geocoder = YandexGeocoder(apiKey: widget.apiKey);
 
@@ -734,31 +838,36 @@ class PlacePickerState extends State<PlacePicker> {
 
   /// Moves the camera to the provided location and updates other UI features to
   /// match the location.
-  void moveToLocation(LatLng latLng, {required bool isNeedToGeocode}) {
-    mapController.future.then((controller) {
-      controller.animateCamera(
-        CameraUpdate.newCameraPosition(
-            CameraPosition(target: latLng, zoom: 17.0)),
+  void moveToLocation(PlaceLatLng latLng, {required bool isNeedToGeocode}) {
+    if (widget.mapProvider == MapProvider.google) {
+      googleMapController?.animateCamera(
+        google.CameraUpdate.newCameraPosition(
+          google.CameraPosition(
+              target: google.LatLng(latLng.latitude, latLng.longitude),
+              zoom: 17.0),
+        ),
       );
-    });
-
-    setMarker(latLng);
+    } else if (widget.mapProvider == MapProvider.osm) {
+      osmMapController?.move(latLng.toOsmLatLng(), 17.0);
+    }
 
     if (isNeedToGeocode) {
-      reverseGeocodeLatLng(latLng);
+      reverseGeocodeLatLng(latLng.toGoogleLatLong());
     }
     // getNearbyPlaces(latLng);
   }
 
-  void moveToCurrentUserLocation() {
-    if (widget.displayLocation != null) {
-      moveToLocation(widget.displayLocation!, isNeedToGeocode: true);
+  void moveToCurrentUserLocation({bool shouldSetMarkerInCenter = false}) {
+    if (widget.initialLocation != null) {
+      moveToLocation(widget.initialLocation!, isNeedToGeocode: true);
+
       return;
     }
 
     Location().getLocation().then((locationData) {
-      var target = LatLng(locationData.latitude!, locationData.longitude!);
-      moveToLocation(target, isNeedToGeocode: true);
+      var target =
+          google.LatLng(locationData.latitude!, locationData.longitude!);
+      moveToLocation(target.toPlaceLatLng(), isNeedToGeocode: true);
     }).catchError((dynamic error) {
       printError(error.toString());
     });

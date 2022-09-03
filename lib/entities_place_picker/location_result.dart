@@ -74,8 +74,10 @@ class LocationResult {
       formattedAddress: formattedAddress ?? this.formattedAddress,
       country: country ?? this.country,
       city: city ?? this.city,
-      administrativeAreaLevel1: administrativeAreaLevel1 ?? this.administrativeAreaLevel1,
-      administrativeAreaLevel2: administrativeAreaLevel2 ?? this.administrativeAreaLevel2,
+      administrativeAreaLevel1:
+          administrativeAreaLevel1 ?? this.administrativeAreaLevel1,
+      administrativeAreaLevel2:
+          administrativeAreaLevel2 ?? this.administrativeAreaLevel2,
       subLocalityLevel1: subLocalityLevel1 ?? this.subLocalityLevel1,
       subLocalityLevel2: subLocalityLevel2 ?? this.subLocalityLevel2,
       postalCode: postalCode ?? this.postalCode,
@@ -83,11 +85,22 @@ class LocationResult {
       streetNumber: streetNumber ?? this.streetNumber,
     );
   }
+
   /// Return copy of instance without coma in parameters
-  LocationResult copyWithClearComa(){
-    if(this.name != null){
+  LocationResult copyWithClearComa() {
+    if (this.name != null) {
       return copyWith(name: this.name?.replaceAll(',', ''));
     }
     return this;
+  }
+
+  /// Full representation of Location result.
+  @override
+  String toString() {
+    return 'name: $name; locality: $locality; latLng: $latLng; formattedAddress: $formattedAddress; '
+        'country: $country; city $city; administrativeAreaLevel1: $administrativeAreaLevel1;'
+        'administrativeAreaLevel2: $administrativeAreaLevel2; subLocalityLevel1: $subLocalityLevel1'
+        'subLocalityLevel2: $subLocalityLevel2; postalCode: $postalCode; placeId: $placeId'
+        'streetNumber: $streetNumber';
   }
 }

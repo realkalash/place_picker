@@ -8,12 +8,13 @@ class SelectPlaceAction extends StatelessWidget {
   final String tipText;
   final bool showTip;
   final bool showChoosedPlaceCoordinates;
+  final bool showChoosedPlaceName;
   final bool showArrow;
   final VoidCallback onTap;
   final Widget? bottomWidget;
   final Widget? iconWidget;
   final Color? colorTip;
-  
+
   const SelectPlaceAction({
     Key? key,
     required this.locationName,
@@ -25,6 +26,7 @@ class SelectPlaceAction extends StatelessWidget {
     required this.latLngString,
     required this.showChoosedPlaceCoordinates,
     required this.showArrow,
+    this.showChoosedPlaceName = true,
     this.bottomWidget,
     this.iconWidget,
     this.colorTip,
@@ -47,32 +49,40 @@ class SelectPlaceAction extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        if (showChoosedPlaceCoordinates) ...[
+                        if (showChoosedPlaceCoordinates &&
+                            latLngString != 'null, null') ...[
                           Text(choosedPlaceText),
                           const SizedBox(height: 4),
                           Text(latLngString,
                               style: const TextStyle(
                                   fontSize: 14, fontWeight: FontWeight.w500)),
                         ],
-                        const SizedBox(height: 4),
-                        Text(approximatePointInGmapsText),
-                        const SizedBox(height: 4),
-                        Text(locationName,
-                            style: const TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 4),
+                        if (showChoosedPlaceName) ...[
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: Text(approximatePointInGmapsText),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: Text(
+                              locationName,
+                              style: const TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.w600),
+                            ),
+                          )
+                        ],
                       ],
                     ),
                   ),
-                  if(iconWidget != null) iconWidget!,
+                  if (iconWidget != null) iconWidget!,
                   if (showArrow)
                     Container(
-                      child: const Padding(
-                          padding: EdgeInsets.all(12),
-                          child: Icon(
-                            Icons.arrow_forward,
-                            color: Colors.white,
-                          )),
+                      margin: EdgeInsets.all(12),
+                      padding: EdgeInsets.all(12),
+                      child: Icon(
+                        Icons.arrow_forward,
+                        color: Colors.white,
+                      ),
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.secondary,
                         borderRadius: BorderRadius.circular(20),
