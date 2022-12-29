@@ -7,6 +7,14 @@ The missing location picker made in Flutter for Flutter. With dark theme and cus
   <img src="https://i.ibb.co/Ry7396K/sc2.png" width=400 />
 </p>
 
+<p float="center">
+  <img src="https://i.ibb.co/3f5cr4p/22-12-29-3062.png" width=400 />
+  <img src="https://i.ibb.co/sbQhx6Q/22-12-29-3063.png" width=400 />
+  <img src="https://i.ibb.co/V2zQhht/22-12-29-3064.png" width=400 />
+  <img src="https://i.ibb.co/c1LR3Nf/22-12-29-3066.png" width=400 />
+  <img src="https://i.ibb.co/hCGkgBj/22-12-29-3068.png" width=400 />
+</p>
+
 ⚠️ Please note: This library will <b>NOT</b> be affected by the deprecation of Place Picker as [indicated here](https://developers.google.com/places/android-sdk/placepicker).
 
 🍭 Remember to enable `Places API`, `Maps SDK for Android`, `Maps SDK for iOS` and `Geocoding API` for your API key.
