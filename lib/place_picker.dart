@@ -311,16 +311,16 @@ class PlacePickerState extends State<PlacePicker> {
     if (widget.mapProvider == MapProvider.osm) {
       return osm.FlutterMap(
         mapController: osmMapController,
-        // children: markers.map((e) => e.toWidget()).toList(),
-        layers: [
-          osm.TileLayerOptions(
-            urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-            userAgentPackageName: widget.userAgentPackageName,
-          ),
-          osm.MarkerLayerOptions(
-            markers: markers.map((e) => e.toOsmMarker()).toList(),
-          ),
-        ],
+        children: markers.map((e) => e.toWidget()).toList(),
+        // layers: [
+        //   osm.TileLayerOptions(
+        //     urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        //     userAgentPackageName: widget.userAgentPackageName,
+        //   ),
+        //   osm.MarkerLayerOptions(
+        //     markers: markers.map((e) => e.toOsmMarker()).toList(),
+        //   ),
+        // ],
         options: osm.MapOptions(
           onTap: (tapPosition, latLng) {
             clearOverlay();
@@ -330,7 +330,6 @@ class PlacePickerState extends State<PlacePicker> {
               isNeedToGeocode: true,
             );
           },
-          controller: osmMapController,
           center: widget.initialLocation != null
               ? widget.initialLocation!.toOsmLatLng()
               : latlong.LatLng(51.509364, -0.128928),
